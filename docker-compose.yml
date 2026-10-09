@@ -1,0 +1,81 @@
+services:
+  traefik:
+    image: traefik:v3.6
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=shortener_web
+      - --entrypoints.web.address=:80
+      - --accesslog=true
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - web
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      APP_BASE_URL: http://${DOMAIN}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/actuator/health | grep -q UP || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - web
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=shortener_web"
+
+      # Router 1: gerenciamento (/api/**)
+      - "traefik.http.routers.shortener-api.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.shortener-api.entrypoints=web"
+      - "traefik.http.routers.shortener-api.service=shortener"
+
+      # Router 2: redirecionamento (/{shortCode} com 7 caracteres alfanuméricos)
+      - "traefik.http.routers.shortener-redirect.rule=Host(`${DOMAIN}`) && PathRegexp(`^/[0-9a-zA-Z]{7}$$`)"
+      - "traefik.http.routers.shortener-redirect.entrypoints=web"
+      - "traefik.http.routers.shortener-redirect.service=shortener"
+
+      # Service compartilhado pelos dois routers
+      - "traefik.http.services.shortener.loadbalancer.server.port=8080"
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+networks:
+  web:
+    name: shortener_web
+  internal:
+    name: shortener_internal
+    internal: true
+
+volumes:
+  pgdata:
