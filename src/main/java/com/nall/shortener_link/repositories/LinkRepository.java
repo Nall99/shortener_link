@@ -16,5 +16,6 @@ public interface LinkRepository extends JpaRepository<Link, Long>{
 
     @Modifying
     @Query("update Link l set l.clickCount = l.clickCount + 1 where l.shortCode = :shortCode")
-    int incremnetClickCount(@Param("shortCode") String shortCode);
+    int incrementClickCount(@Param("shortCode") String shortCode);
+
 }

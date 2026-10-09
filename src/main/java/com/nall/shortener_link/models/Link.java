@@ -23,7 +23,7 @@ public class Link {
     private String shortCode;
 
     @Column(name = "original_url", nullable = false, length = 2048)
-    private String originalUrl;
+    private String originalURL;
 
     @Column(name =  "created_at", nullable = false, updatable = false)
     private Instant createdAt;

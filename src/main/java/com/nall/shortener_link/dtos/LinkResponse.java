@@ -15,7 +15,7 @@ public record LinkResponse(
         return new LinkResponse(
                 link.getShortCode(),
                 baseUrl + "/" + link.getShortCode(),
-                link.getOriginalUrl(),
+                link.getOriginalURL(),
                 link.getCreatedAt(),
                 link.getClickCount()
         );

@@ -60,6 +60,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:5433:5432"      # <- novo
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -69,6 +71,7 @@ services:
       retries: 10
     networks:
       - internal
+      - dbaccess                   # <- novo
 
 networks:
   web:
@@ -76,6 +79,8 @@ networks:
   internal:
     name: shortener_internal
     internal: true
+  dbaccess:
+    name: shortener_dbaccess
 
 volumes:
   pgdata:

@@ -24,7 +24,7 @@ public class LinkService {
 
         Link link = new Link();
         link.setShortCode(code);
-        link.setOriginalUrl(originalUrl);
+        link.setOriginalURL(originalUrl);
         return linkRepository.save(link);
     }
 
@@ -48,8 +48,8 @@ public class LinkService {
     @Transactional
     public String resolveAndCount(String shortCode){
         Link link = findByShortCode(shortCode);
-        linkRepository.incremnetClickCount(shortCode);
-        return link.getOriginalUrl();
+        linkRepository.incrementClickCount(shortCode);
+        return link.getOriginalURL();
     }
 
     private String generateUniqueCode(){
